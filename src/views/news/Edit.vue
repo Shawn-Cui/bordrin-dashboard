@@ -24,7 +24,7 @@
             :on-success="handleCoverSuccess"
             :before-upload="beforeCoverUpload"
             :http-request="uploadCover">
-            <img v-if="news.coverURL" :src="news.coverURL" class="coverURL">
+            <img v-if="coverURL" :src="coverURL" class="coverURL">
             <i v-else class="el-icon-plus coverURL-uploader-icon"></i>
           </el-upload>
         </el-form-item>
@@ -45,11 +45,32 @@
       </el-col> -->
     </el-row>
 
+    <el-row :gutter="60" v-if="topCoverShow">
+      <el-col :span="24">
+        <el-form-item label="置顶图" prop="topCoverURL">
+          <el-upload
+            class="topCoverURL-uploader"
+            action="https://example.com/"
+            :show-file-list="false"
+            :on-success="handleTopCoverSuccess"
+            :before-upload="beforeTopCoverUpload"
+            :http-request="uploadTopCover">
+            <img v-if="topCoverURL" :src="topCoverURL" class="topCoverURL">
+            <i v-else class="el-icon-plus topCoverURL-uploader-icon"></i>
+          </el-upload>
+        </el-form-item>
+      </el-col>
+    </el-row>
+
     <el-row>
       <el-form-item label="正文" prop="content">
         <vue-editor id="editor"
           useCustomImageHandler
-          @imageAdded="uploadContentImg" v-model="news.content">
+          @imageAdded="uploadContentImg" v-model="content" :rules="[
+            {required: true, message: '正文不能为空'},
+            {min: 5, message: '正文应不少于五个字符'}
+          ]"
+        >
         </vue-editor>
       </el-form-item>
     </el-row>
@@ -71,9 +92,19 @@ export default {
   components: {
     VueEditor
   },
+  watch: {
+    'news.content': function (val, oldVal) {
+      console.log(val, oldVal)
+    }
+  },
   data: function() {
     return {
+      coverURL: '',
+      topCoverURL: '',
+      topCoverShow: false,
       news: {},
+      newsContent: {},
+      content: '',
       // 新建新闻的字段限制规则
       editNewsRules: {
         title: [
@@ -81,12 +112,19 @@ export default {
           {min: 2, max: 30, message: '长度在 2 到 30 个字符', trigger: 'blur'},
           // {pattern: /^[\u4E00-\u9FA5]+$/, message: '请填写中文'}
         ],
-        content: [
-          {required: true, message: '正文不能为空', trigger: 'blur'},
-          {min: 5, message: '正文应不少于五个字符', trigger: 'blur'}
+        // content: [
+        //   {required: true, message: '正文不能为空', trigger: 'blur'},
+        //   {min: 5, message: '正文应不少于五个字符', trigger: 'blur'}
+        // ],
+        coverURL: [
+          {required: true, message: '封面图不能为空', trigger: 'blur'}
+        ],
+        topCoverURL: [
+          {required: true, message: '置顶图不能为空', trigger: 'blur'}
         ]
       },
       id: null,
+      tag: null,
       err: [],
       searchName: ''
     }
@@ -94,10 +132,15 @@ export default {
   created() {
     console.log(this.$route.params)
     this.id = this.$route.params.id
-    if (this.id) {
+    this.tag = this.$route.params.tag
+    if (this.id || this.id === 0) {
       localStorage.setItem('bordrin-newsId', this.id)
     }
+    if (this.tag && this.tag === 'head') {
+      this.topCoverShow = true
+    }
     this.getNewsById()
+    this.getNewsContent()
   },
   methods: {
     // 根据id获取当前新闻
@@ -105,13 +148,28 @@ export default {
       let storageId = await localStorage.getItem('bordrin-newsId')
       console.log(storageId)
       this.id = this.id || storageId
-      let data = await axios.get('/news/' + this.id)
+      let data = await axios.get('/api/News/' + this.id)
       console.log(data.data)
       this.news = data.data
+      this.coverURL = data.data.coverURL
+      this.topCoverURL = data.data.topCoverURL
+    },
+    async getNewsContent() {
+      let storageId = await localStorage.getItem('bordrin-newsId')
+      console.log(storageId)
+      this.id = this.id || storageId
+      let data = await axios.get('/api/News/' + this.id + '/newsContents')
+      console.log(data.data)
+      this.newsContent = data.data
+      this.news.content = data.data.content
     },
     handleCoverSuccess() {
     },
     beforeCoverUpload() {
+    },
+    handleTopCoverSuccess() {
+    },
+    beforeTopCoverUpload() {
     },
     handleThumbSuccess() {
     },
@@ -120,13 +178,46 @@ export default {
     // 上传封面大图
     uploadCover(file) {
       let me = this
-      upload.uploadHandle(file, function(err, url) {
-        console.log(err, url)
-        if (err) {
-          console.log(err, '上传失败！')
-        }
-        me.news.coverURL = url
-      })
+      // let img = new Image()
+      // let url = URL.createObjectURL(file)
+      // img.src = url
+      // img.onload = function () {
+      //   console.log(this, this.width, this.height)
+      //   if (this.width === 580 && this.height === 515) {
+          upload.uploadHandle(file, function(err, url) {
+            console.log(err, url)
+            if (err) {
+              console.log(err, '上传失败！')
+            }
+            me.coverURL = url
+            me.news.coverURL = url
+          })
+      //   } else {
+      //     me.$message({showClose: true, message: '图片尺寸必须为580*515！', type: 'warning'})
+      //   }
+      // }
+    },
+    // 上传封面大图
+    uploadTopCover(file) {
+      let me = this
+      // let img = new Image()
+      // let url = URL.createObjectURL(file)
+      // img.src = url
+      // img.onload = function () {
+      //   console.log(this, this.width, this.height)
+      //   if (this.width === 580 && this.height === 515) {
+          upload.uploadHandle(file, function(err, url) {
+            console.log(err, url)
+            if (err) {
+              console.log(err, '上传失败！')
+            }
+            me.topCoverURL = url
+            me.news.topCoverURL = url
+          })
+      //   } else {
+      //     me.$message({showClose: true, message: '图片尺寸必须为580*515！', type: 'warning'})
+      //   }
+      // }
     },
     // 上传封面小图
     uploadThumb(file) {
@@ -160,18 +251,40 @@ export default {
     edit: function (formName) {
       this.$refs[formName].validate((valid) => {
         if (valid) {
-          axios.put('/news/' + this.id, this.news)
+          axios.put('/api/News/' + this.id, {
+            title: this.news.title,
+            coverURL: this.news.coverURL,
+            topCoverURL: this.news.topCoverURL,
+            tag: this.news.head,
+            author: this.news.author,
+            dateOfRelease: this.news.dateOfRelease
+          })
             .then((response) => {
               console.log(response)
               if (response.status >= 200 && response.status < 300) {
-                this.$message({showClose: true, message: '编辑成功！', type: 'success'})
-                this.$router.push('/')
+                axios.put('/api/News/' + this.id + '/newsContents', {
+                  content: this.news.content
+                })
+                  .then((response) => {
+                    console.log(response)
+                    if (response.status >= 200 && response.status < 300) {
+                      this.$message({showClose: true, message: '编辑成功！', type: 'success'})
+                      this.$router.push('/')
+                    } else {
+                      this.$message({showClose: true, message: response.status, type: 'warning'})
+                    }
+                  })
+                  .catch((error) => {
+                    this.$message({showClose: true, message: '编辑正文失败！', type: 'error'})
+                  })
+                // this.$message({showClose: true, message: '编辑成功！', type: 'success'})
+                // this.$router.push('/')
               } else {
                 this.$message({showClose: true, message: response.status, type: 'warning'})
               }
             })
             .catch(function (error) {
-              this.$message({showClose: true, message: '编辑失败！', type: 'error'})
+              this.$message({showClose: true, message: '编辑新闻失败！', type: 'error'})
             })
         } else {
           this.$message({showClose: true, message: '您所填写的信息不完整，无法提交！', type: 'warning'})
@@ -188,30 +301,58 @@ export default {
     margin: 0 50px;
   }
 
-  .coverURL-uploader .el-upload, .thumbURL-uploader .el-upload {
+  /* .coverURL-uploader .el-upload, .thumbURL-uploader .el-upload {
     border: 1px dashed #d9d9d9;
     border-radius: 6px;
     cursor: pointer;
     position: relative;
     overflow: hidden;
-  }
-  .coverURL-uploader .el-upload:hover, .thumbURL-uploader .el-upload:hover {
+  } */
+  .coverURL-uploader .coverURL:hover, .coverURL-uploader-icon:hover {
     border-color: #409EFF;
   }
-  .coverURL-uploader-icon, .thumbURL-uploader-icon {
+  .coverURL-uploader-icon {
+    border: 1px dashed #d9d9d9;
+    border-radius: 6px;
+    cursor: pointer;
     font-size: 28px;
     color: #8c939d;
-    width: 390px;
+    width: 225px;
     height: 200px;
     line-height: 200px;
     text-align: center;
   }
   .coverURL-uploader .coverURL {
-    width: 390px;
+    border: 1px dashed #d9d9d9;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 225px;
     height: 200px;
     display: block;
   }
 
+  .topCoverURL-uploader .topCoverURL:hover, .topCoverURL-uploader-icon:hover {
+    border-color: #409EFF;
+  }
+  .topCoverURL-uploader-icon {
+    border: 1px dashed #d9d9d9;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 28px;
+    color: #8c939d;
+    width: 640px;
+    height: 400px;
+    line-height: 400px;
+    text-align: center;
+  }
+  .topCoverURL-uploader .topCoverURL {
+    border: 1px dashed #d9d9d9;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 640px;
+    height: 400px;
+    display: block;
+  }
   /* .coverURL-uploader .thumbURL {
     width: 200px;
     height: 200px;

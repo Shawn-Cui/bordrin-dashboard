@@ -39,34 +39,45 @@
 </template>
 
 <script type="text/babel">
-export default {
-  name: 'BdMenu',
-  data: function() {
-    return {
-      curActive: '/news/News',
-      siteNavBack: false,
-      siteNav: true,
-      editPWshow: true,
-      logoutShow: true
+  import axios from 'axios'
+
+  export default {
+    name: 'BdMenu',
+    data: function() {
+      return {
+        curActive: '/news/News',
+        siteNavBack: false,
+        siteNav: true,
+        editPWshow: true,
+        logoutShow: true
+      }
+    },
+    methods: {
+      handleSelect(key, keyPath) {
+        console.log(key, keyPath)
+      },
+      backPage() {
+        this.$router.go(-1);//返回
+      },
+      logout() {
+        axios.post('/api/Admins/logout').then((response) => {
+          if (response.status >= 200 && response.status < 300) {
+            console.log(response)
+            localStorage.setItem('BDToken', '')
+            this.$message({showClose: true, message: "登出成功！", type: 'success'})
+            this.$router.push({
+              name : 'login'
+            })
+          } else {
+            this.$message({showClose: true, message: "登出失败！", type: 'error'})
+          }
+        })
+        // this.$http.post('/logout').then((response)=>{
+        //   this.$message({showClose: true, message: '退出成功！', type: 'success'});
+        // })
+      },
     }
-  },
-  methods: {
-    handleSelect(key, keyPath) {
-      console.log(key, keyPath)
-    },
-    backPage() {
-      this.$router.go(-1);//返回
-    },
-    logout(){
-      this.$router.push({
-        name: 'login'
-      })
-      // this.$http.post('/logout').then((response)=>{
-      //   this.$message({showClose: true, message: '退出成功！', type: 'success'});
-      // })
-    },
   }
-}
 </script>
 
 <style>

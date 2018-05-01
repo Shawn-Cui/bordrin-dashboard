@@ -22,12 +22,34 @@ new Vue({
   components: { App },
   created() {
     const url = process.env.API_ROOT
-    axios.interceptors.request.use(function (config) {
+    axios.interceptors.request.use(config => {
       if (config.url.indexOf(url) === -1) {
         config.url = url + config.url
       }
-      return config;
-    }, function (error) {
+      if (config.url.indexOf('login') === -1) {
+        let token = localStorage.getItem('BDToken') || ''
+        console.log(config.params)
+        config.params = {
+          'access_token': token
+        }
+        console.log(config.params)        
+      }
+      return config
+    }, error => {
+      return Promise.reject(error)
+    })
+
+    axios.interceptors.response.use(res => {
+      console.log(res)
+      return res
+    }, error => {
+      let response = error.response
+      if (response && response.status === 401) {
+        console.log(this, this.$router)
+        this.$router.push({
+          name : 'login'
+        })
+      }
       return Promise.reject(error)
     })
   }

@@ -12,7 +12,11 @@
     <el-main>
       
       <el-table :data="newsList" border stripe class="tableWidth" column-key="k">
-        <!-- <el-table-column type="selection" align="center" width="100"></el-table-column> -->
+        <el-table-column align="center" label="置顶">
+          <template slot-scope="scope">
+            <el-radio class="radio" v-model="head" :label="scope.row.id" @change="changeHead(scope.row)"></el-radio>
+          </template>
+        </el-table-column>
         <el-table-column align="center" label="标题">
           <template slot-scope="scope">
             <span>{{ scope.row.title}}</span>
@@ -35,7 +39,7 @@
         </el-table-column> -->
         <el-table-column align="center" label="日期">
           <template slot-scope="scope">
-            <span>{{ scope.row.dateOfCreated }}</span>
+            <span>{{ scope.row.dateOfRelease }}</span>
           </template>
         </el-table-column>
         <el-table-column align="center" label="操作">
@@ -76,6 +80,7 @@
       return {
         // 搜索关键字
         search: '',
+        head: '',
         // 新闻列表
         newsList: [],
         msg: {
@@ -119,41 +124,92 @@
       },
       // 根据关键字搜索新闻
       async searchNews(search) {
-        let res = await axios.get('/news', {
+        let res = await axios.get('/api/News', {
           params: {
-            _page: this.localPage,
-            _limit: this.msg.pagNumber,
+            skip: this.localPage * this.msg.pagNumber,
+            limit: this.msg.pagNumber,
+            order: 'dateOfRelease DESC',
             title: search
           }
         })
         console.log(res)
         this.newsList = res.data
-        let totalRes = await axios.get('/news', {
+        let totalRes = await axios.get('/api/News/count', {
           params: {
+            order: 'dateOfRelease DESC',
             title: search
           }
         })
-        this.msg.pagTotal = totalRes.data.length
+        this.msg.pagTotal = totalRes.count
       },
       cancleAdd(formName) {
         this.addBox = false;
         this.$refs[formName].resetFields();
       },
+      changeHead(news) {
+        console.log(news)
+        this.$confirm('将此新闻设为置顶新闻？', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          axios.get('/api/News?filter[where][tag]=head').then((response) => {
+            console.log(response)
+            if (response.status >= 200 && response.status < 300) {
+              if (!response.data || response.data.length === 0 || response.data[0].id !== news.id) {
+                axios.put('/api/News/' + news.id, {
+                  title: news.title || '',
+                  dateOfRelease: news.dateOfRelease || '',
+                  author: news.author || '',
+                  coverURL: news.coverURL || '',
+                  topCoverURL: news.topCoverURL || '',
+                  tag: 'head'
+                }).then((response) => {
+                  console.log(response)
+                  this.$router.push({
+                    name : 'news.edit',
+                    params: {
+                      id : news.id,
+                      tag: 'head'
+                    }
+                  })
+                })
+              }
+            }  
+          })
+        })
+      },
       // 新增新闻
       subBtn: async function (formName) {
-        let formData = new FormData()
-        formData.append("title", this.news.title)
+        // let formData = new FormData()
+        // formData.append("title", this.news.title)
         this.$refs[formName].validate((valid) => {
           if (valid) {
-            axios.post('/news', {
-              title: this.news.title
+            axios.post('/api/News', {
+              title: this.news.title,
+              dateOfRelease: new Date().toString()
             }).then((response) => {
               if (response.status >= 200 && response.status < 300) {
-                this.msg.pagTotal += 1
-                this.$refs[formName].resetFields();
-                this.addBox = false
-                this.getNewsList()
-                this.$message({showClose: true, message: "新增新闻成功！", type: 'success'});
+                console.log(response.data)
+                let news = response.data
+                axios.post('/api/News/' + response.data.id + '/newsContents', {}).then((response) => {
+                  if (response.status >= 200 && response.status < 300) {
+                    console.log(response.data)
+                    this.msg.pagTotal += 1
+                    this.$refs[formName].resetFields();
+                    this.addBox = false
+                    this.getNewsList()
+                    this.$message({showClose: true, message: "新增新闻成功！", type: 'success'});
+                    this.$router.push({
+                      name : 'news.edit',
+                      params: {
+                        id : news.id
+                      }
+                    })
+                  } else {
+                    this.$message({showClose: true, message: "新增新闻失败！", type: 'error'});
+                  }
+                })
               } else {
                 this.$message({showClose: true, message: "新增新闻失败！", type: 'error'});
               }
@@ -169,16 +225,22 @@
       },
       // 获取新闻列表
       async getNewsList() {
-        let res = await axios.get('/news', {
+        let filter = '?filter[skip]=' + (this.localPage - 1) * this.msg.pagNumber + '&[limit]=' + this.msg.pagNumber + '&[order]=dateOfRelease DESC'
+        let res = await axios.get('/api/News' + filter, {
           params: {
-            _page: this.localPage,
-            _limit: this.msg.pagNumber
+            skip: this.localPage * this.msg.pagNumber,
+            limit: this.msg.pagNumber,
+            order: 'dateOfRelease DESC',
           }
         })
+        let headRes = await axios.get('/api/News?filter[where][tag]=head')
+        if (headRes && headRes.length > 0) {
+          this.head = headRes[0].id
+        }
         console.log(res)
         this.newsList = res.data
-        let totalRes = await axios.get('/news')
-        this.msg.pagTotal = totalRes.data.length
+        let totalRes = await axios.get('/api/News')
+        this.msg.pagTotal = totalRes.count
       },
       // 编辑新闻
       handleEdit(item) {
@@ -196,19 +258,26 @@
           cancelButtonText: '取消',
           type: 'warning'
         }).then(() => {
-          let delId = parseInt(row.id);
-          axios.delete("/news/" + delId).then((response) => {
+          let delId = parseInt(row.id)
+          axios.delete("/api/News/" + delId + '/newsContents').then((response) => {
             console.log(response)
             if (response.status >= 200 && response.status < 300) {
-              this.msg.pagTotal -= 1
-              this.getNewsList()
-              this.$message({showClose: true, message: '删除新闻成功！', type: 'success'});
+              axios.delete("/api/News/" + delId).then((response) => {
+                console.log(response)
+                if (response.status >= 200 && response.status < 300) {
+                  this.msg.pagTotal -= 1
+                  this.getNewsList()
+                  this.$message({showClose: true, message: '删除新闻成功！', type: 'success'})
+                } else {
+                  this.$message({showClose: true, message: '删除新闻失败！', type: 'error'})
+                }
+              })
             } else {
-              this.$message({showClose: true, message: '删除新闻失败！', type: 'error'});
+              this.$message({showClose: true, message: '删除新闻失败！', type: 'error'})
             }
           })
         }).catch(() => {
-          this.$message({type: 'info', message: '已取消删除'});
+          this.$message({type: 'info', message: '已取消删除'})
         })
       }
     }
@@ -322,7 +391,7 @@
   }
 
   .coverURL {
-    width: 195px;
+    width: 112px;
     height: 100px;
   }
 
@@ -338,5 +407,9 @@
 
   .title {
     width: 100%;
+  }
+
+  span.el-radio__label {
+    display: none;
   }
 </style>
