@@ -62,6 +62,19 @@
       </el-col>
     </el-row>
 
+    <el-row :gutter="60" v-if="topCoverShow">
+      <el-col :span="24">
+        <el-form-item label="摘要" prop="abstract">
+          <el-input
+            type="textarea"
+            autosize
+            placeholder="请输入内容"
+            v-model="news.abstract">
+          </el-input>
+        </el-form-item>
+      </el-col>
+    </el-row>
+
     <el-row>
       <el-form-item label="正文" prop="content">
         <vue-editor id="editor"
@@ -112,10 +125,13 @@ export default {
         ],
         topCoverURL: [
           {required: true, message: '置顶图不能为空', trigger: 'blur'}
+        ],
+        abstract: [
+          {required: true, message: '摘要不能为空', trigger: 'blur'}
         ]
       },
       id: null,
-      tag: null,
+      tag: undefined,
       err: [],
       searchName: ''
     }
@@ -144,6 +160,9 @@ export default {
       this.news = data.data
       this.coverURL = data.data.coverURL
       this.topCoverURL = data.data.topCoverURL
+      if (data.data.tag === 'head') {
+        this.topCoverShow = true
+      }
     },
     async getNewsContent() {
       let storageId = await localStorage.getItem('bordrin-newsId')
@@ -169,20 +188,41 @@ export default {
     // 上传封面大图
     uploadCover(file) {
       let me = this
+      let reader = new FileReader
+      reader.onload = function(evt) {
+        let image = new Image();
+        image.onload = function () {
+          if (this.width === 580 && this.height === 515) {
+            upload.uploadHandle(file, function(err, url) {
+              console.log(err, url)
+              if (err) {
+                console.log(err, '上传失败！')
+              }
+              me.coverURL = url
+              me.news.coverURL = url
+            })
+          } else {
+            me.$message({showClose: true, message: '图片尺寸必须为580*515！', type: 'warning'})
+          }
+        };
+        image.src = evt.target.result;
+      }
+      console.log(file)
+      reader.readAsDataURL(file.file)
       // let img = new Image()
       // let url = URL.createObjectURL(file)
       // img.src = url
       // img.onload = function () {
       //   console.log(this, this.width, this.height)
       //   if (this.width === 580 && this.height === 515) {
-          upload.uploadHandle(file, function(err, url) {
-            console.log(err, url)
-            if (err) {
-              console.log(err, '上传失败！')
-            }
-            me.coverURL = url
-            me.news.coverURL = url
-          })
+          // upload.uploadHandle(file, function(err, url) {
+          //   console.log(err, url)
+          //   if (err) {
+          //     console.log(err, '上传失败！')
+          //   }
+          //   me.coverURL = url
+          //   me.news.coverURL = url
+          // })
       //   } else {
       //     me.$message({showClose: true, message: '图片尺寸必须为580*515！', type: 'warning'})
       //   }
@@ -191,12 +231,12 @@ export default {
     // 上传置顶大图
     uploadTopCover(file) {
       let me = this
-      // let img = new Image()
-      // let url = URL.createObjectURL(file)
-      // img.src = url
-      // img.onload = function () {
-      //   console.log(this, this.width, this.height)
-      //   if (this.width === 580 && this.height === 515) {
+      let img = new Image()
+      let url = URL.createObjectURL(file.file)
+      img.src = url
+      img.onload = function () {
+        console.log(this, this.width, this.height)
+        if (this.width === 1420 && this.height === 890) {
           upload.uploadHandle(file, function(err, url) {
             console.log(err, url)
             if (err) {
@@ -205,10 +245,10 @@ export default {
             me.topCoverURL = url
             me.news.topCoverURL = url
           })
-      //   } else {
-      //     me.$message({showClose: true, message: '图片尺寸必须为580*515！', type: 'warning'})
-      //   }
-      // }
+        } else {
+          me.$message({showClose: true, message: '图片尺寸必须为1420*890！', type: 'warning'})
+        }
+      }
     },
     // 上传封面小图
     uploadThumb(file) {
@@ -246,7 +286,8 @@ export default {
             title: this.news.title,
             coverURL: this.news.coverURL,
             topCoverURL: this.news.topCoverURL,
-            tag: this.news.head,
+            tag: this.news.tag,
+            abstract: this.news.abstract,
             author: this.news.author,
             dateOfRelease: this.news.dateOfRelease
           })
