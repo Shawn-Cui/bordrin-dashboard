@@ -6,6 +6,7 @@ import 'element-ui/lib/theme-chalk/base.css'
 import Vue from 'vue'
 import ElementUI from 'element-ui'
 import axios from 'axios'
+import moment from 'moment'
 
 import router from './router'
 import App from './App'
@@ -51,6 +52,16 @@ new Vue({
         })
       }
       return Promise.reject(error)
+    })
+
+    Vue.filter('formatDateTime', function (value) {
+      if (value) {
+        if (typeof value === 'string') {
+          return moment(String(value)).format('YYYY-MM-DD hh:mm')
+        } else if (typeof value === 'number') {
+          return moment.unix(value / 1000).format('YYYY-MM-DD hh:mm')
+        }
+      }
     })
   }
 })
