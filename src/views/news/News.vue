@@ -39,7 +39,7 @@
         </el-table-column> -->
         <el-table-column align="center" label="日期">
           <template slot-scope="scope">
-            <span>{{ scope.row.dateOfRelease }}</span>
+            <span>{{ scope.row.dateOfRelease | formatDateTime }}</span>
           </template>
         </el-table-column>
         <el-table-column align="center" label="操作">
@@ -80,7 +80,7 @@
       return {
         // 搜索关键字
         search: '',
-        head: '',
+        head: null,
         // 新闻列表
         newsList: [],
         msg: {
@@ -147,14 +147,12 @@
         this.$refs[formName].resetFields();
       },
       changeHead(news) {
-        console.log(news)
         this.$confirm('将此新闻设为置顶新闻？', '提示', {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
           type: 'warning'
         }).then(() => {
           axios.get('/api/News?filter[where][tag]=head').then((response) => {
-            console.log(response)
             if (response.status >= 200 && response.status < 300) {
               if (!response.data || response.data.length === 0 || response.data[0].id !== news.id) {
                 axios.put('/api/News/' + news.id, {
@@ -165,7 +163,6 @@
                   topCoverURL: news.topCoverURL || '',
                   tag: 'head'
                 }).then((response) => {
-                  console.log(response)
                   this.$router.push({
                     name : 'news.edit',
                     params: {
@@ -190,16 +187,14 @@
               dateOfRelease: new Date().toString()
             }).then((response) => {
               if (response.status >= 200 && response.status < 300) {
-                console.log(response.data)
                 let news = response.data
                 axios.post('/api/News/' + response.data.id + '/newsContents', {}).then((response) => {
                   if (response.status >= 200 && response.status < 300) {
-                    console.log(response.data)
                     this.msg.pagTotal += 1
-                    this.$refs[formName].resetFields();
+                    this.$refs[formName].resetFields()
                     this.addBox = false
                     this.getNewsList()
-                    this.$message({showClose: true, message: "新增新闻成功！", type: 'success'});
+                    this.$message({showClose: true, message: "新增新闻成功！", type: 'success'})
                     this.$router.push({
                       name : 'news.edit',
                       params: {
@@ -207,16 +202,16 @@
                       }
                     })
                   } else {
-                    this.$message({showClose: true, message: "新增新闻失败！", type: 'error'});
+                    this.$message({showClose: true, message: "新增新闻失败！", type: 'error'})
                   }
                 })
               } else {
-                this.$message({showClose: true, message: "新增新闻失败！", type: 'error'});
+                this.$message({showClose: true, message: "新增新闻失败！", type: 'error'})
               }
             })
           } else {
-            this.$message({showClose: true, message: "您所填写的信息不完整，无法提交", type: 'warning'});
-            return false;
+            this.$message({showClose: true, message: "您所填写的信息不完整，无法提交", type: 'warning'})
+            return false
           }
         });
       },
@@ -234,10 +229,9 @@
           }
         })
         let headRes = await axios.get('/api/News?filter[where][tag]=head')
-        if (headRes && headRes.length > 0) {
-          this.head = headRes[0].id
+        if (headRes.data && headRes.data.length > 0) {
+          this.head = headRes.data[0].id
         }
-        console.log(res)
         this.newsList = res.data
         let totalRes = await axios.get('/api/News')
         this.msg.pagTotal = totalRes.count
@@ -260,10 +254,8 @@
         }).then(() => {
           let delId = parseInt(row.id)
           axios.delete("/api/News/" + delId + '/newsContents').then((response) => {
-            console.log(response)
             if (response.status >= 200 && response.status < 300) {
               axios.delete("/api/News/" + delId).then((response) => {
-                console.log(response)
                 if (response.status >= 200 && response.status < 300) {
                   this.msg.pagTotal -= 1
                   this.getNewsList()
