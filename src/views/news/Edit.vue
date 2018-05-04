@@ -66,11 +66,7 @@
       <el-form-item label="正文" prop="content">
         <vue-editor id="editor"
           useCustomImageHandler
-          @imageAdded="uploadContentImg" v-model="content" :rules="[
-            {required: true, message: '正文不能为空'},
-            {min: 5, message: '正文应不少于五个字符'}
-          ]"
-        >
+          @imageAdded="uploadContentImg" v-model="news.content">
         </vue-editor>
       </el-form-item>
     </el-row>
@@ -92,11 +88,6 @@ export default {
   components: {
     VueEditor
   },
-  watch: {
-    'news.content': function (val, oldVal) {
-      console.log(val, oldVal)
-    }
-  },
   data: function() {
     return {
       coverURL: '',
@@ -112,10 +103,10 @@ export default {
           {min: 2, max: 30, message: '长度在 2 到 30 个字符', trigger: 'blur'},
           // {pattern: /^[\u4E00-\u9FA5]+$/, message: '请填写中文'}
         ],
-        // content: [
-        //   {required: true, message: '正文不能为空', trigger: 'blur'},
-        //   {min: 5, message: '正文应不少于五个字符', trigger: 'blur'}
-        // ],
+        content: [
+          {required: true, message: '正文不能为空', trigger: 'blur'},
+          {min: 5, message: '正文应不少于五个字符', trigger: 'blur'}
+        ],
         coverURL: [
           {required: true, message: '封面图不能为空', trigger: 'blur'}
         ],
@@ -161,7 +152,7 @@ export default {
       let data = await axios.get('/api/News/' + this.id + '/newsContents')
       console.log(data.data)
       this.newsContent = data.data
-      this.news.content = data.data.content
+      this.news = Object.assign({}, this.news, {content: data.data.content})
     },
     handleCoverSuccess() {
     },
@@ -197,7 +188,7 @@ export default {
       //   }
       // }
     },
-    // 上传封面大图
+    // 上传置顶大图
     uploadTopCover(file) {
       let me = this
       // let img = new Image()
