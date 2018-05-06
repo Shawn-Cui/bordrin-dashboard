@@ -120,11 +120,25 @@
     },
     methods: {
       searchOrder() {
-        this.searchNews(this.search);
+        let filter = {
+          where: {
+            title: {
+              like: '%' + this.search + '%'
+            }
+          }
+        }
+        this.searchNews(filter);
       },
       // 根据关键字搜索新闻
       async searchNews(search) {
-        let res = await axios.get('/api/News', {
+        let filter = {
+          skip: (this.localPage - 1) * this.msg.pagNumber,
+          limit: this.msg.pagNumber,
+          order: 'dateOfRelease DESC'
+        }
+        filter.where = search.where
+
+        let res = await axios.get('/api/News?filter=' + encodeURI(JSON.stringify(filter)), {
           params: {
             skip: this.localPage * this.msg.pagNumber,
             limit: this.msg.pagNumber,
@@ -220,8 +234,12 @@
       },
       // 获取新闻列表
       async getNewsList() {
-        let filter = '?filter[skip]=' + (this.localPage - 1) * this.msg.pagNumber + '&[limit]=' + this.msg.pagNumber + '&[order]=dateOfRelease DESC'
-        let res = await axios.get('/api/News' + filter, {
+        let filter = {
+          skip: (this.localPage - 1) * this.msg.pagNumber,
+          limit: this.msg.pagNumber,
+          order: 'dateOfRelease DESC'
+        }
+        let res = await axios.get('/api/News?filter=' + encodeURI(JSON.stringify(filter)), {
           params: {
             skip: this.localPage * this.msg.pagNumber,
             limit: this.msg.pagNumber,
