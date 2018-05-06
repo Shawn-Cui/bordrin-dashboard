@@ -24,6 +24,11 @@ export default new Router({
           path: '/news/edit',
           name: 'news.edit',
           component: () => import('@/views/news/Edit')
+        },
+        {
+          path: '/recruit',
+          name: 'recruit',
+          component: () => import('@/views/recruit/Recruit')
         }
       ]
     },
