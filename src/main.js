@@ -57,9 +57,9 @@ new Vue({
     Vue.filter('formatDateTime', function (value) {
       if (value) {
         if (typeof value === 'string') {
-          return moment(String(value)).format('YYYY-MM-DD hh:mm')
-        } else if (typeof value === 'number') {
-          return moment.unix(value / 1000).format('YYYY-MM-DD hh:mm')
+        //   return moment(String(value)).format('YYYY-MM-DD hh:mm')
+        // } else if (typeof value === 'number') {
+          return moment.unix(parseInt(value) / 1000).format('YYYY-MM-DD hh:mm')
         }
       }
     })
