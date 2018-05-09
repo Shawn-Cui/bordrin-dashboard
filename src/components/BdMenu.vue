@@ -11,9 +11,13 @@
       active-text-color="#fff"
 
       style="z-index: 999">
-      <el-submenu index="1" >
+      <el-submenu index="1" v-if="newsPermission">
         <template slot="title">新闻</template>
-        <el-menu-item index="/news/News">列表</el-menu-item>
+        <el-menu-item index="/news">列表</el-menu-item>
+      </el-submenu>
+      <el-submenu index="2" v-if="recruitPermission">
+        <template slot="title">招聘</template>
+        <el-menu-item index="/recruit">列表</el-menu-item>
       </el-submenu>
     </el-menu>
 
@@ -49,7 +53,22 @@
         siteNavBack: false,
         siteNav: true,
         editPWshow: true,
-        logoutShow: true
+        logoutShow: true,
+        newsPermission: false,
+        recruitPermission: false
+      }
+    },
+    mounted() {
+      let routePermission = localStorage.getItem('BDRoutePermission') || ''
+      switch (routePermission) {
+        case '10':
+          this.newsPermission = true
+          this.recruitPermission = false
+          break
+        case '01':
+          this.newsPermission = false
+          this.recruitPermission = true
+          break
       }
     },
     methods: {
