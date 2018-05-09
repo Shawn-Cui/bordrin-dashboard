@@ -45,7 +45,8 @@ export default {
     if (!file.name) {
       file = file.file
     }
-    let key = '' + file.name
+    let index = file.name.lastIndexOf('.')
+    let key = '' + new Date().getTime() + file.name.substr(index)
 
     console.log(file, key)
 
