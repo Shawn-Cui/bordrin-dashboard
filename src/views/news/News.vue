@@ -198,7 +198,7 @@
           if (valid) {
             axios.post('/api/News', {
               title: this.news.title,
-              dateOfRelease: new Date().toString()
+              dateOfRelease: new Date().getTime().toString()
             }).then((response) => {
               if (response.status >= 200 && response.status < 300) {
                 let news = response.data
