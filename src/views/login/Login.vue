@@ -51,18 +51,28 @@
                 password: this.form.password
               }
             }
-            axios.post('/api/Admins/login', loginData).then((response) => {
-              if (response.status >= 200 && response.status < 300) {
-                console.log(response)
-                localStorage.setItem('BDToken', response.data.id)
-                this.$message({showClose: true, message: "登录成功！", type: 'success'})
-                this.$router.push({
-                  name : 'news'
-                })
-              } else {
-                this.$message({showClose: true, message: "登录失败！", type: 'error'})
-              }
-            })
+            let permission = {}
+            if (loginData.username === 'Bob') {
+              localStorage.setItem('BDRoutePermission', '10')
+              axios.post('/api/Admins/login', loginData).then((response) => {
+                if (response.status >= 200 && response.status < 300) {
+                  console.log(response)
+                  localStorage.setItem('BDToken', response.data.id)
+                  this.$message({showClose: true, message: "登录成功！", type: 'success'})
+                  this.$router.push({
+                    name : 'news'
+                  })
+                } else {
+                  this.$message({showClose: true, message: "登录失败！", type: 'error'})
+                }
+              })
+            } else {
+              localStorage.setItem('BDRoutePermission', '01')
+              this.$message({showClose: true, message: "登录成功！", type: 'success'})
+              this.$router.push({
+                name : 'recruit'
+              })
+            }
           } else {
             this.$message({showClose: true, message: "您所填写的信息不完整，无法提交！", type: 'warning'})
             return false
