@@ -170,7 +170,7 @@ export default {
       this.id = this.id || storageId
       let data = await axios.get('/api/News/' + this.id + '/newsContents')
       console.log(data.data)
-      this.newsContent = data.data
+      // this.newsContent = data.data.content
       this.news = Object.assign({}, this.news, {content: data.data.content})
     },
     handleCoverSuccess() {
@@ -289,7 +289,7 @@ export default {
             tag: this.news.tag,
             abstract: this.news.abstract,
             author: this.news.author,
-            dateOfRelease: this.news.dateOfRelease
+            dateOfRelease: new Date(this.news.dateOfRelease).getTime().toString()
           })
             .then((response) => {
               console.log(response)
