@@ -250,17 +250,6 @@ export default {
         }
       }
     },
-    // 上传封面小图
-    uploadThumb(file) {
-      let me = this
-      upload.uploadHandle(file, function(err, url) {
-        console.log(err, url)
-        if (err) {
-          console.log(err, '上传失败！')
-        }
-        me.news.thumbURL = url
-      })
-    },
     // 上传正文图片
     uploadContentImg(file, Editor, cursorLocation, resetUploader) {
       let me = this
@@ -332,14 +321,6 @@ export default {
   .el-form {
     margin: 0 50px;
   }
-
-  /* .coverURL-uploader .el-upload, .thumbURL-uploader .el-upload {
-    border: 1px dashed #d9d9d9;
-    border-radius: 6px;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-  } */
   .coverURL-uploader .coverURL:hover, .coverURL-uploader-icon:hover {
     border-color: #409EFF;
   }
@@ -385,11 +366,6 @@ export default {
     height: 400px;
     display: block;
   }
-  /* .coverURL-uploader .thumbURL {
-    width: 200px;
-    height: 200px;
-    display: block;
-  } */
 
   .edit-footer {
     text-align: right;
