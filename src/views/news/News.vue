@@ -168,7 +168,7 @@
         }).then(() => {
           axios.get('/api/News?filter[where][tag]=head').then((response) => {
             if (response.status >= 200 && response.status < 300) {
-              if (!response.data || response.data.length === 0 || response.data[0].id !== news.id) {
+              if (!response.data || response.data.length === 0) {
                 axios.put('/api/News/' + news.id, {
                   title: news.title || '',
                   dateOfRelease: news.dateOfRelease || '',
@@ -183,6 +183,27 @@
                       id : news.id,
                       tag: 'head'
                     }
+                  })
+                })
+              } else {
+                let newData = response.data[0]
+                newData.tag = ''
+                axios.put('/api/News/' + response.data[0].id, newData).then((response) => {
+                  axios.put('/api/News/' + news.id, {
+                    title: news.title || '',
+                    dateOfRelease: news.dateOfRelease || '',
+                    author: news.author || '',
+                    coverURL: news.coverURL || '',
+                    topCoverURL: news.topCoverURL || '',
+                    tag: 'head'
+                  }).then((response) => {
+                    this.$router.push({
+                      name : 'news.edit',
+                      params: {
+                        id : news.id,
+                        tag: 'head'
+                      }
+                    })
                   })
                 })
               }
