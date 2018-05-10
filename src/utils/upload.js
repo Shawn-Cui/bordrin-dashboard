@@ -13,7 +13,8 @@ export default {
     let key = options.Key || ''
     console.log(options)
     let pathname = key.indexOf('/') === 0 ? key : '/' + key
-    let url = 'http://127.0.0.1:5000/auth'
+    // let url = 'http://127.0.0.1:5000/auth'
+    let url = 'http://115.159.86.224:8282/auth'
     let xhr = new XMLHttpRequest()
     let data = {
       method: method,
