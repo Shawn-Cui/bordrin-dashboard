@@ -289,7 +289,7 @@ export default {
             tag: this.news.tag,
             abstract: this.news.abstract,
             author: this.news.author,
-            dateOfRelease: new Date(this.news.dateOfRelease).getTime().toString()
+            dateOfRelease: this.news.dateOfRelease
           })
             .then((response) => {
               console.log(response)
