@@ -44,9 +44,9 @@
         </el-table-column>
         <el-table-column align="center" label="操作">
           <template slot-scope="scope">
-            <el-button type="primary" icon="el-icon-edit" size="mini" @click="handleEdit(scope)"></el-button>
-            <el-button type="success" icon="el-icon-view" size="mini"></el-button>
-            <el-button type="danger" icon="el-icon-delete" size="mini" @click="handleDelete(scope.$index, scope.row)"></el-button>
+            <el-button type="primary" size="mini" @click="handleEdit(scope)">编辑</el-button>
+            <el-button type="success" size="mini">预览</el-button>
+            <el-button type="danger" size="mini" @click="handleDelete(scope.$index, scope.row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -403,6 +403,11 @@
   #news .buttonwidthThree { /*通过，不通过，退出按钮样式*/
     width: 50%;
     height: 40px
+  }
+
+  .el-button--mini {
+    padding: 7px 0;
+    width: 40px;
   }
 
   .el-button--primary {
